@@ -24,13 +24,14 @@ werwolfonline, a php web game
 <!DOCTYPE html>
 <HTML>
 <head>
-<title>Werwölfe</title>
+<title>🐺 Werwölfe - Das Mysteriöse Spiel der Nacht</title>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta http-equiv="Expires" content="Sat, 01 Dec 2001 00:00:00 GMT">
 <link rel="stylesheet" type="text/css" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
 <?php
 require_once('includes/functions.php');
 
@@ -125,7 +126,8 @@ p#liste {
 </head>
 <body onload="jsstart();">
 <section id="header">
-<h1>Werwolfonline.eu</h1>
+<h1>🌙 Werwolfonline.eu 🐺</h1>
+<div class="header-subtitle">Das mysteriöse Spiel zwischen Tag und Nacht</div>
 </section>
 <section id="gameboard">
 <?php
