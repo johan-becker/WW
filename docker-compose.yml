@@ -1,0 +1,39 @@
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=werwolf_password
+      - DB_NAME=werwolf
+    networks:
+      - werwolf-network
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: werwolf_password
+      MYSQL_DATABASE: werwolf
+      MYSQL_USER: werwolf_user
+      MYSQL_PASSWORD: werwolf_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - werwolf-network
+
+volumes:
+  mysql_data:
+
+networks:
+  werwolf-network:
+    driver: bridge
