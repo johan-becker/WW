@@ -7,6 +7,15 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql
 # Enable Apache modules
 RUN a2enmod rewrite headers expires deflate
 
+# Apache configuration
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+RUN echo "DirectoryIndex index.php health.php Werwolf.php" >> /etc/apache2/apache2.conf
+
+# PHP optimizations
+RUN echo "output_buffering = 4096" >> /usr/local/etc/php/conf.d/werewolf.ini
+RUN echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/werewolf.ini
+RUN echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/werewolf.ini
+
 # Copy application
 COPY . /var/www/html/
 
@@ -17,16 +26,20 @@ RUN chmod -R 755 /var/www/html
 # Create data directory for SQLite fallback
 RUN mkdir -p /var/www/html/data && chown www-data:www-data /var/www/html/data
 
-# Apache configuration
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-RUN echo "DirectoryIndex index.php Werwolf.php" >> /etc/apache2/apache2.conf
+# Ensure log directory exists
+RUN mkdir -p /var/www/html/log && chown www-data:www-data /var/www/html/log
 
-# PHP optimizations
-RUN echo "output_buffering = 4096" >> /usr/local/etc/php/conf.d/werewolf.ini
-RUN echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/werewolf.ini
+# Set Railway port if provided
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_LOG_DIR /var/log/apache2
 
 # Expose port
 EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost/health.php || exit 1
 
 # Start Apache
 CMD ["apache2-foreground"]

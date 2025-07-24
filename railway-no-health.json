@@ -5,8 +5,6 @@
     "dockerfilePath": "Dockerfile.simple"
   },
   "deploy": {
-    "healthcheckPath": "/health.php",
-    "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"
   }
 }
