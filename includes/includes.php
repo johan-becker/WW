@@ -189,6 +189,61 @@ class SQLiteToMySQLiWrapper {
             $query = str_replace('`', '', $query); // Remove backticks
             $query = preg_replace('/AUTO_INCREMENT/i', 'AUTOINCREMENT', $query);
             
+            // Handle old table creation attempts - just return success
+            if (preg_match('/CREATE TABLE \d+_(game|spieler)/i', $query)) {
+                // Old code trying to create per-game tables - ignore but return success
+                return new SQLiteResultWrapper($this->pdo->query("SELECT 1"));
+            }
+            
+            // Handle INSERT INTO old table format - convert to new format
+            if (preg_match('/INSERT INTO (\d+)_spieler/i', $query, $matches)) {
+                $gameId = $matches[1];
+                // Convert to new players table format
+                $query = preg_replace('/INSERT INTO \d+_spieler/', 'INSERT INTO players', $query);
+                // Add game_id if not present
+                if (!preg_match('/game_id/', $query)) {
+                    $query = str_replace('(', "(game_id, player_number, ", $query);
+                    $query = str_replace('VALUES (', "VALUES ($gameId, ", $query);
+                }
+            }
+            
+            // Handle INSERT INTO old game table format
+            if (preg_match('/INSERT INTO (\d+)_game/i', $query, $matches)) {
+                $gameId = $matches[1];
+                $query = preg_replace('/INSERT INTO \d+_game/', 'INSERT INTO games', $query);
+                if (!preg_match('/\bid\b/', $query)) {
+                    $query = str_replace('(', "(id, ", $query);
+                    $query = str_replace('VALUES (', "VALUES ($gameId, ", $query);
+                }
+            }
+            
+            // Handle SELECT from old tables
+            if (preg_match('/FROM (\d+)_spieler/i', $query, $matches)) {
+                $gameId = $matches[1];
+                $query = str_replace($matches[0], "FROM players WHERE game_id = $gameId", $query);
+                // Fix WHERE clause duplication
+                $query = preg_replace('/WHERE game_id = \d+ WHERE/', 'WHERE game_id = '.$gameId.' AND', $query);
+            }
+            
+            if (preg_match('/FROM (\d+)_game/i', $query, $matches)) {
+                $gameId = $matches[1];
+                $query = str_replace($matches[0], "FROM games WHERE id = $gameId", $query);
+            }
+            
+            // Handle UPDATE old tables
+            if (preg_match('/UPDATE (\d+)_spieler/i', $query, $matches)) {
+                $gameId = $matches[1];
+                $query = str_replace($matches[0], "UPDATE players", $query);
+                $query = str_replace('SET ', "SET ", $query);
+                $query = str_replace('WHERE ', "WHERE game_id = $gameId AND ", $query);
+            }
+            
+            if (preg_match('/UPDATE (\d+)_game/i', $query, $matches)) {
+                $gameId = $matches[1];
+                $query = str_replace($matches[0], "UPDATE games", $query);
+                $query = str_replace('WHERE ', "WHERE id = $gameId AND ", $query);
+            }
+            
             $result = $this->pdo->query($query);
             
             // Return a wrapper that mimics mysqli_result
@@ -198,7 +253,8 @@ class SQLiteToMySQLiWrapper {
             return false;
         } catch (PDOException $e) {
             error_log("SQLite Query Error: " . $e->getMessage() . " Query: " . $query);
-            return false;
+            // Return empty result to prevent crashes
+            return new SQLiteResultWrapper($this->pdo->query("SELECT 1 WHERE 0"));
         }
     }
     
