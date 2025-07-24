@@ -3,9 +3,18 @@
     "description": "Werewolf Online - Multiplayer Web Game",
     "type": "project",
     "require": {
-        "php": "^8.0"
+        "php": "^7.4 || ^8.0",
+        "ext-mysqli": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*"
     },
+    "require-dev": {},
     "scripts": {
         "start": "php -S 0.0.0.0:$PORT -t ."
+    },
+    "config": {
+        "platform": {
+            "php": "8.0"
+        }
     }
 }
