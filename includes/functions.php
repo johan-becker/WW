@@ -61,7 +61,7 @@ function loescheAlteSpiele($mysqli)
     if($existiert && isset($alleres->num_rows))
     {
       $temp = $alleres->fetch_assoc();
-      if ($temp['letzterAufruf'] < $zeitpunkt)
+      if ($temp && isset($temp['letzterAufruf']) && $temp['letzterAufruf'] < $zeitpunkt)
       {
         //löschen
         $mysqli->query("DROP TABLE `$i"."_game`");
@@ -1219,7 +1219,9 @@ function urwolfHandle($mysqli, $id)
     $mysqli->Query("UPDATE $spielID"."_spieler SET bereit = 1 WHERE id = $eigeneID");
     return true; //NIEMAND
   }
-  if ($mysqli->Query("SELECT * FROM $spielID"."_spieler WHERE id = $eigeneID")->fetch_assoc()['urwolf_anzahl_faehigkeiten'] > 0)
+  $result = $mysqli->Query("SELECT * FROM $spielID"."_spieler WHERE id = $eigeneID");
+  $player = $result ? $result->fetch_assoc() : null;
+  if ($player && isset($player['urwolf_anzahl_faehigkeiten']) && $player['urwolf_anzahl_faehigkeiten'] > 0)
   {
     //schauen, ob es ein valider Spieler ist
     $stmt = $mysqli->prepare("SELECT * FROM $spielID"."_spieler WHERE id = ? AND lebt = 1");

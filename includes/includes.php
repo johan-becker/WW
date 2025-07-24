@@ -291,7 +291,7 @@ class SQLiteResultWrapper {
     }
     
     public function fetch_assoc() {
-        if ($this->index < $this->num_rows) {
+        if ($this->index < $this->num_rows && isset($this->results[$this->index])) {
             return $this->results[$this->index++];
         }
         return null;
