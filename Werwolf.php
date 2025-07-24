@@ -154,6 +154,15 @@ p#liste {
   $timerText = ""; //Welcher Text vor dem Timer angezeigt werden soll
   $logButtonAnzeigen = true;
 
+  // Handle URL parameters for game redirection (from create game)
+  if (isset($_GET['game']) && isset($_GET['id']) && isset($_GET['verify'])) {
+      setcookie("SpielID", (int)$_GET['game'], time()+172800);
+      setcookie("eigeneID", (int)$_GET['id'], time()+172800);
+      setcookie("verifizierungsnr", (int)$_GET['verify'], time()+172800);
+      $_COOKIE["SpielID"] = (int)$_GET['game'];
+      $_COOKIE["eigeneID"] = (int)$_GET['id'];
+      $_COOKIE["verifizierungsnr"] = (int)$_GET['verify'];
+  }
 
       //Schauen, ob wir uns bereits in einem Spiel befinden!
       if (isset($_COOKIE['SpielID']) && isset($_COOKIE['eigeneID']))
@@ -179,7 +188,7 @@ p#liste {
             //Schauen, ob es auch einen Eintrag zu diesem Spiel in der Datenbank gibt...
             $spiel_existiert = True;
             try{
-              $alleres = $mysqli->Query("SELECT * FROM $spielID"."_spieler");
+              $alleres = $mysqli->Query("SELECT * FROM players WHERE game_id = $spielID");
             }
             catch (Exception $e) {
               $spiel_existiert = False;
@@ -187,12 +196,12 @@ p#liste {
             if($spiel_existiert && isset($alleres->num_rows))
             {
               //Schauen, ob es auch mich als Spieler gibt und meine verifizierungsnr stimmt
-              $spielerResult = $mysqli->Query("SELECT * FROM $spielID"."_spieler WHERE id = $eigeneID AND verifizierungsnr = ".(int)$_COOKIE['verifizierungsnr']);
+              $spielerResult = $mysqli->Query("SELECT * FROM players WHERE game_id = $spielID AND player_number = $eigeneID AND verification_number = ".(int)$_COOKIE['verifizierungsnr']);
               if ($spielerResult->num_rows >= 1)
               {
 
                 //Zuallererst einmal den letzten Zugriff loggen:
-                $mysqli->Query("UPDATE $spielID"."_game SET letzterAufruf = ".time());
+                $mysqli->Query("UPDATE games SET letzter_aufruf = ".time()." WHERE id = $spielID");
                 //Wir befinden uns bereits in einem Spiel
 
                 //Dass wir aber nicht ohne Grund reloaden, setzen wir für uns selbst reload auf false:
@@ -1665,20 +1674,20 @@ p#liste {
                       //Die SpielID groß mitteilen
                       echo "<BR><h1 align = 'center'>$spielID</h1><BR>Mit dieser Zahl können andere deinem Spiel beitreten!";
 
-                      //Die eigene SpielID setzen
+                      //Die eigene SpielID setzen (remove secure flag for free hosting)
                       setcookie ("SpielID", $spielID, time()+172800); //Dauer 2 Tage, länger sollte ein Spiel nicht dauern ;)
                       setcookie ("eigeneID",0, time()+172800);
-                      setcookie ("verifizierungsnr",$verifizierungsnr, time()+172800, secure: true, httponly: true);
+                      setcookie ("verifizierungsnr",$verifizierungsnr, time()+172800);
                       $_COOKIE["SpielID"]=$spielID;
                       $_COOKIE["eigeneID"] = 0;
                       $_COOKIE["verifizierungsnr"] = $verifizierungsnr;
                       writeGameToLogSpielErstellen($mysqli,$spielID,$_POST['ihrName']);
                       
                       // Add player to the game
-                      $mysqli->Query("INSERT INTO $spielID"."_spieler (id, name, spielleiter, lebt, verifizierungsnr) VALUES (0, '".$mysqli->real_escape_string($_POST['ihrName'])."', 1, 1, $verifizierungsnr)");
+                      $mysqli->Query("INSERT INTO players (game_id, player_number, name, is_game_master, is_alive, verification_number) VALUES ($spielID, 0, '".$mysqli->real_escape_string($_POST['ihrName'])."', 1, 1, $verifizierungsnr)");
                       
-                      // Redirect to the game instead of reloading
-                      echo "<script>window.location.href = 'Werwolf.php?game=$spielID&id=0';</script>";
+                      // Redirect to the game with all parameters
+                      echo "<script>window.location.href = 'Werwolf.php?game=$spielID&id=0&verify=$verifizierungsnr';</script>";
                       exit(); // Stop execution to prevent page reload
                       }
                   }

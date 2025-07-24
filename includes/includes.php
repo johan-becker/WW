@@ -103,7 +103,7 @@ function createSQLiteTables($pdo) {
         inaktiv_zeit_zusatz INTEGER DEFAULT 0,
         tages_text TEXT,
         waiting_for_others_time INTEGER,
-        letzter_aufruf INTEGER,
+        letzter_aufruf INTEGER DEFAULT 0,
         spielphase INTEGER DEFAULT 0,
         nacht INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
