@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐺 Werewolf Online - Night Falls</title>
+    <link rel="stylesheet" href="modern-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body class="game-body">
+    
+    <!-- Game HUD -->
+    <div class="game-hud">
+        <div class="container">
+            <div class="hud-content">
+                
+                <!-- Left: Game Phase & Timer -->
+                <div class="hud-left">
+                    <div class="game-phase">
+                        <div class="phase-indicator night"></div>
+                        <span class="phase-text">Night Phase</span>
+                    </div>
+                    <div class="timer" id="gameTimer">02:45</div>
+                </div>
+
+                <!-- Center: Game Info -->
+                <div class="hud-center">
+                    <div class="game-code">Game: ABC123</div>
+                    <div class="players-alive">👥 8/12 alive</div>
+                </div>
+
+                <!-- Right: Role & Actions -->
+                <div class="hud-right">
+                    <div class="role-info werewolf">
+                        <span class="role-icon">🐺</span>
+                        <span class="role-name">Werewolf</span>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="toggleSettings()">⚙️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <main class="game-main">
+        <div class="container">
+            <div class="game-layout">
+                
+                <!-- Players Grid -->
+                <div class="players-section">
+                    <div class="players-grid" id="playersGrid">
+                        <!-- Players will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Action Area -->
+                <div class="action-section">
+                    <div class="glass-card action-card">
+                        <h3 class="action-title">🌙 Choose Your Target</h3>
+                        <p class="action-description">Select a player to eliminate during the night.</p>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-danger btn-lg" id="confirmAction" disabled>
+                                🎯 Confirm Target
+                            </button>
+                            <button class="btn btn-ghost" onclick="cancelAction()">
+                                ❌ Cancel
+                            </button>
+                        </div>
+                        
+                        <div class="selected-target" id="selectedTarget" style="display: none;">
+                            <span>Target: </span>
+                            <span class="target-name"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Section -->
+                <div class="chat-section">
+                    <div class="chat-container">
+                        <div class="chat-tabs">
+                            <button class="chat-tab active" data-tab="all">💬 All Chat</button>
+                            <button class="chat-tab" data-tab="werewolf">🐺 Werewolf</button>
+                            <button class="chat-tab" data-tab="dead">👻 Dead</button>
+                        </div>
+                        
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will be populated by JavaScript -->
+                        </div>
+                        
+                        <div class="chat-input-container">
+                            <input type="text" class="chat-input" placeholder="Type your message..." id="chatInput" maxlength="200">
+                            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Role Sidebar (Mobile Toggle) -->
+    <div class="role-sidebar" id="roleSidebar">
+        <div class="glass-card">
+            <div class="role-card werewolf">
+                <div class="role-icon">🐺</div>
+                <div class="role-name">Werewolf</div>
+                <div class="role-description">
+                    You are one of the werewolves. Each night, work with your pack to eliminate villagers. 
+                    Win by equaling or outnumbering the villagers.
+                </div>
+                
+                <div class="role-abilities">
+                    <h4>🎯 Abilities</h4>
+                    <ul>
+                        <li>🌙 Night Kill - Choose a target to eliminate</li>
+                        <li>💬 Pack Chat - Communicate with other werewolves</li>
+                        <li>🎭 Deception - Blend in during day discussions</li>
+                    </ul>
+                </div>
+                
+                <div class="teammates" id="teammates">
+                    <h4>🐺 Pack Members</h4>
+                    <div class="teammate-list">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Log Panel -->
+    <div class="game-log-panel" id="gameLogPanel">
+        <div class="glass-card">
+            <div class="panel-header">
+                <h3>📜 Game Log</h3>
+                <button class="btn btn-ghost btn-sm" onclick="toggleGameLog()">✕</button>
+            </div>
+            <div class="log-content" id="logContent">
+                <!-- Game events will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="glass-card">
+            <div class="panel-header">
+                <h3>⚙️ Settings</h3>
+                <button class="btn btn-ghost btn-sm" onclick="toggleSettings()">✕</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <input type="checkbox" checked> Sound Effects
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <input type="checkbox" checked> Chat Notifications
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <input type="checkbox"> Compact Mode
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Theme</label>
+                    <select class="form-input">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="auto">Auto</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <button class="btn btn-danger" onclick="confirmLeaveGame()">
+                        🚪 Leave Game
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Action Bar -->
+    <div class="mobile-action-bar">
+        <button class="mobile-action-btn" onclick="toggleRoleSidebar()">
+            <span class="btn-icon">🐺</span>
+            <span class="btn-label">Role</span>
+        </button>
+        <button class="mobile-action-btn" onclick="toggleGameLog()">
+            <span class="btn-icon">📜</span>
+            <span class="btn-label">Log</span>
+        </button>
+        <button class="mobile-action-btn" onclick="toggleChat()">
+            <span class="btn-icon">💬</span>
+            <span class="btn-label">Chat</span>
+            <span class="notification-badge" id="chatBadge">3</span>
+        </button>
+        <button class="mobile-action-btn" onclick="toggleSettings()">
+            <span class="btn-icon">⚙️</span>
+            <span class="btn-label">Settings</span>
+        </button>
+    </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="modern-game.js"></script>
+</body>
+</html>
+
+<style>
+/* Game-specific styles */
+.game-body {
+    padding-top: 80px; /* Account for fixed HUD */
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+    min-height: 100vh;
+}
+
+.game-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-primary);
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+}
+
+.hud-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+}
+
+.hud-left, .hud-center, .hud-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.phase-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.phase-indicator.night {
+    background: var(--role-werewolf);
+}
+
+.phase-indicator.day {
+    background: var(--accent-warning);
+}
+
+.phase-text {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.timer {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+}
+
+.game-code, .players-alive {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.role-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-glass);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-primary);
+}
+
+.role-info.werewolf {
+    border-color: var(--role-werewolf);
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.role-info.villager {
+    border-color: var(--role-villager);
+    background: rgba(5, 150, 105, 0.1);
+}
+
+.role-icon {
+    font-size: 1.2rem;
+}
+
+.role-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Game Layout */
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    grid-template-rows: 1fr auto;
+    gap: var(--space-xl);
+    min-height: calc(100vh - 120px);
+}
+
+.players-section {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.chat-section {
+    grid-column: 2;
+    grid-row: 1 / -1;
+}
+
+.action-section {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+/* Players Grid */
+.players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+    padding: var(--space-lg);
+}
+
+.player-card {
+    background: var(--bg-glass);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.player-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-xl);
+}
+
+.player-card.selected {
+    border-color: var(--accent-danger);
+    background: rgba(239, 68, 68, 0.1);
+    transform: translateY(-4px);
+}
+
+.player-card.dead {
+    opacity: 0.5;
+    filter: grayscale(100%);
+    cursor: not-allowed;
+}
+
+.player-card.dead::after {
+    content: '💀';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+}
+
+.player-avatar {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-md);
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+.player-name {
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+
+.player-status {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Action Card */
+.action-card {
+    text-align: center;
+}
+
+.action-title {
+    margin-bottom: var(--space-sm);
+}
+
+.action-description {
+    color: var(--text-muted);
+    margin-bottom: var(--space-lg);
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.selected-target {
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--accent-danger);
+}
+
+.target-name {
+    font-weight: 600;
+    color: var(--accent-danger);
+}
+
+/* Chat Styles */
+.chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-glass);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-primary);
+}
+
+.chat-tabs {
+    display: flex;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.chat-tab {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 0.85rem;
+}
+
+.chat-tab.active {
+    color: var(--text-primary);
+    background: var(--bg-glass);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-md);
+    max-height: 400px;
+}
+
+.chat-message {
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    animation: messageSlide 0.3s ease-out;
+    border-left: 3px solid transparent;
+}
+
+.chat-message.werewolf {
+    border-left-color: var(--role-werewolf);
+    background: rgba(220, 38, 38, 0.05);
+}
+
+.chat-message.system {
+    background: rgba(99, 102, 241, 0.05);
+    border-left-color: var(--accent-primary);
+    font-style: italic;
+}
+
+.message-author {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+}
+
+.message-content {
+    margin-top: var(--space-xs);
+    font-size: 0.9rem;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    float: right;
+}
+
+/* Sidebars and Panels */
+.role-sidebar, .game-log-panel, .settings-panel {
+    position: fixed;
+    top: 80px;
+    right: -400px;
+    width: 350px;
+    height: calc(100vh - 80px);
+    background: var(--bg-primary);
+    transition: right var(--transition-normal);
+    z-index: 999;
+    overflow-y: auto;
+    padding: var(--space-lg);
+}
+
+.role-sidebar.open, .game-log-panel.open, .settings-panel.open {
+    right: 0;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.role-abilities ul {
+    list-style: none;
+    padding: 0;
+}
+
+.role-abilities li {
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.teammate-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.teammate {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+}
+
+.teammate-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gradient-danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+/* Settings */
+.setting-group {
+    margin-bottom: var(--space-lg);
+}
+
+.setting-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Mobile Styles */
+.mobile-action-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-primary);
+    padding: var(--space-sm);
+    z-index: 1000;
+}
+
+.mobile-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    position: relative;
+    flex: 1;
+}
+
+.mobile-action-btn:hover, .mobile-action-btn.active {
+    color: var(--text-primary);
+    background: var(--bg-glass);
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+.btn-label {
+    font-size: 0.7rem;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--accent-danger);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .game-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .chat-section {
+        grid-column: 1;
+        grid-row: 3;
+        max-height: 300px;
+    }
+    
+    .action-section {
+        grid-row: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-body {
+        padding-bottom: 80px; /* Account for mobile action bar */
+    }
+    
+    .mobile-action-bar {
+        display: flex;
+    }
+    
+    .hud-content {
+        flex-direction: column;
+        gap: var(--space-sm);
+        padding: var(--space-sm) 0;
+    }
+    
+    .players-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        padding: var(--space-md);
+    }
+    
+    .chat-section {
+        display: none; /* Hidden by default on mobile, toggled via mobile bar */
+    }
+    
+    .chat-section.mobile-open {
+        display: block;
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        bottom: 80px;
+        z-index: 998;
+        background: var(--bg-primary);
+        padding: var(--space-md);
+    }
+    
+    .role-sidebar, .game-log-panel, .settings-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .players-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .hud-left, .hud-center, .hud-right {
+        gap: var(--space-sm);
+    }
+    
+    .timer {
+        font-size: 1.2rem;
+    }
+}
+</style>

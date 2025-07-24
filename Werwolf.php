@@ -22,7 +22,7 @@ werwolfonline, a php web game
 
 
 <!DOCTYPE html>
-<HTML>
+<HTML lang="de" data-theme="dark">
 <head>
 <title>🐺 Werwölfe - Das Mysteriöse Spiel der Nacht</title>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
@@ -30,8 +30,10 @@ werwolfonline, a php web game
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta http-equiv="Expires" content="Sat, 01 Dec 2001 00:00:00 GMT">
+<meta name="description" content="Experience the ultimate social deduction game online. Join friends in this thrilling werewolf game with modern UI and engaging gameplay.">
+<meta name="keywords" content="werewolf, mafia, online game, social deduction, multiplayer">
 <link rel="stylesheet" type="text/css" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Cinzel:wght@400;600&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
 <script src="werewolf-canvas.js"></script>
 <?php
 require_once('includes/functions.php');
@@ -126,6 +128,18 @@ p#liste {
 <!-- Dynamic canvas-generated favicon will be added by JavaScript -->
 </head>
 <body onload="jsstart();">
+<!-- Modern Theme Toggle -->
+<button class="theme-toggle" onclick="window.modernWerewolf?.toggleTheme?.()" aria-label="Toggle theme" style="display:none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"/>
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+    </svg>
+</button>
+
+<!-- Modern Notification Container -->
+<div id="notificationContainer" style="position:fixed;top:1.5rem;right:1.5rem;z-index:1001;display:flex;flex-direction:column;gap:0.5rem;"></div>
+
+<!-- Atmospheric Particles -->
 <div class="particle-container">
 	<div class="particle"></div>
 	<div class="particle"></div>
@@ -136,11 +150,27 @@ p#liste {
 	<div class="particle"></div>
 	<div class="particle"></div>
 </div>
-<section id="header">
-<h1 id="main-title">🌙 Werwolfonline.de 🐺</h1>
-<div class="header-subtitle">Das mysteriöse Spiel zwischen Tag und Nacht</div>
+
+<!-- Enhanced Header -->
+<section id="header" class="glass-card">
+    <h1 id="main-title">🌙 Werwolfonline.de 🐺</h1>
+    <div class="header-subtitle">Das mysteriöse Spiel zwischen Tag und Nacht</div>
 </section>
-<section id="gameboard">
+
+<!-- Main Game Board -->
+<section id="gameboard" class="glass-card"><?php
+// Add modern UI helper function
+function addModernUIClasses($content) {
+    // Add modern classes to buttons
+    $content = preg_replace('/<input([^>]*type=["\']submit["\'][^>]*)>/i', '<input$1 class="btn btn-primary">', $content);
+    $content = preg_replace('/<button([^>]*)>/i', '<button$1 class="btn btn-ghost">', $content);
+    
+    return $content;
+}
+
+// Start output buffering to capture content for enhancement
+ob_start();
+?>
 <?php
   include "includes/includes.php"; //Datenbank
   include "includes/constants.php"; //Hier werden Konstanten für Phasen und Charaktere definiert
@@ -2241,6 +2271,136 @@ var sekBisTimerBeginn;
   }
 
 </script>
+
+<!-- Modern Enhancement Script -->
+<script>
+// Initialize modern features after page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Show theme toggle after JS loads
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+        themeToggle.style.display = 'block';
+    }
+    
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('werewolf-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Enhance existing forms with modern styling
+    setTimeout(() => {
+        enhanceExistingUI();
+        addModernInteractions();
+    }, 500);
+});
+
+function enhanceExistingUI() {
+    // Add modern classes to buttons that don't have them
+    document.querySelectorAll('input[type="submit"]:not(.btn)').forEach(btn => {
+        btn.classList.add('btn', 'btn-primary');
+    });
+    
+    document.querySelectorAll('button:not(.btn):not(.theme-toggle)').forEach(btn => {
+        btn.classList.add('btn', 'btn-ghost');
+    });
+    
+    // Add glass card styling to main sections
+    document.querySelectorAll('#gameselect, #PlayerLog, #gamelogdiv, #listdiv').forEach(section => {
+        if (section && !section.classList.contains('glass-card')) {
+            section.classList.add('glass-card');
+        }
+    });
+    
+    // Enhance player log messages
+    document.querySelectorAll('#PlayerLog p, #gamelogdiv p').forEach(message => {
+        if (!message.classList.contains('modern-chat-message')) {
+            message.classList.add('modern-chat-message');
+            
+            // Add role-based styling
+            const text = message.textContent.toLowerCase();
+            if (text.includes('werwolf') || text.includes('werewolf')) {
+                message.classList.add('werewolf');
+            } else if (text.includes('system') || text.includes('spiel')) {
+                message.classList.add('system');
+            }
+        }
+    });
+}
+
+function addModernInteractions() {
+    // Add loading states to form submissions
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+                
+                // Show notification
+                if (window.modernWerewolf && window.modernWerewolf.showNotification) {
+                    window.modernWerewolf.showNotification('Verarbeitung...', 'info');
+                }
+            }
+        });
+    });
+    
+    // Add smooth scrolling to anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Add keyboard shortcuts info on first visit
+    if (!localStorage.getItem('werewolf-shortcuts-shown')) {
+        setTimeout(() => {
+            if (window.modernWerewolf && window.modernWerewolf.showNotification) {
+                window.modernWerewolf.showNotification(
+                    'Tipp: Drücke Ctrl+H für Tastenkürzel!', 
+                    'info', 
+                    8000
+                );
+                localStorage.setItem('werewolf-shortcuts-shown', 'true');
+            }
+        }, 3000);
+    }
+}
+
+// Enhanced game state management
+let gameStateChecker;
+function startGameStateMonitoring() {
+    gameStateChecker = setInterval(() => {
+        // Monitor for game state changes and enhance new content
+        enhanceExistingUI();
+        
+        // Check for any error messages and style them appropriately
+        document.querySelectorAll('p.error').forEach(errorMsg => {
+            if (window.modernWerewolf && window.modernWerewolf.showNotification) {
+                const message = errorMsg.textContent;
+                if (message && !errorMsg.dataset.notified) {
+                    window.modernWerewolf.showNotification(message, 'error');
+                    errorMsg.dataset.notified = 'true';
+                }
+            }
+        });
+    }, 2000);
+}
+
+// Start monitoring after initial setup
+setTimeout(startGameStateMonitoring, 1000);
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (gameStateChecker) clearInterval(gameStateChecker);
+});
+</script>
+
 <script src="werewolf-canvas.js"></script>
 </body>
 </HTML>

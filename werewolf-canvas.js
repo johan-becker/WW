@@ -815,7 +815,468 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make werewolfCanvas globally available for character portraits
     window.werewolfCanvas = werewolfCanvas;
+    
+    // Initialize modern features
+    initializeModernFeatures();
 });
+
+// Modern Features Integration
+function initializeModernFeatures() {
+    setupThemeToggle();
+    setupModernNotifications();
+    setupKeyboardShortcuts();
+    setupSmoothAnimations();
+    setupRoleEnhancements();
+}
+
+// Theme Toggle Functionality
+function setupThemeToggle() {
+    // Create theme toggle button if it doesn't exist
+    if (!document.querySelector('.theme-toggle')) {
+        const themeToggle = document.createElement('button');
+        themeToggle.className = 'theme-toggle';
+        themeToggle.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+        `;
+        themeToggle.onclick = toggleTheme;
+        document.body.appendChild(themeToggle);
+    }
+    
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('werewolf-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('werewolf-theme', newTheme);
+    
+    // Update theme toggle icon
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+        const icon = newTheme === 'dark' ? 
+            `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>` :
+            `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>`;
+        themeToggle.innerHTML = icon;
+    }
+    
+    showNotification(`Switched to ${newTheme} theme`, 'success');
+}
+
+// Modern Notification System
+function setupModernNotifications() {
+    // Create notification container if it doesn't exist
+    if (!document.getElementById('notificationContainer')) {
+        const container = document.createElement('div');
+        container.id = 'notificationContainer';
+        container.style.cssText = `
+            position: fixed;
+            top: var(--space-lg, 1.5rem);
+            right: var(--space-lg, 1.5rem);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm, 0.5rem);
+        `;
+        document.body.appendChild(container);
+    }
+}
+
+function showNotification(message, type = 'info', duration = 5000) {
+    const container = document.getElementById('notificationContainer');
+    if (!container) return;
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    notification.innerHTML = `
+        <div class="flex items-center gap-sm">
+            <span>${icons[type] || icons.info}</span>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;">×</button>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    // Auto remove
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, duration);
+}
+
+// Keyboard Shortcuts
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key) {
+                case 'd':
+                    e.preventDefault();
+                    toggleTheme();
+                    break;
+                case 'h':
+                    e.preventDefault();
+                    showHelpModal();
+                    break;
+                case 'Enter':
+                    if (e.target.matches('input[type="text"]')) {
+                        e.preventDefault();
+                        const form = e.target.closest('form');
+                        if (form) {
+                            const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+                            if (submitBtn) submitBtn.click();
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        // Escape key to close modals/panels
+        if (e.key === 'Escape') {
+            closeAllModals();
+        }
+    });
+}
+
+function showHelpModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(4px);
+    `;
+    
+    modal.innerHTML = `
+        <div class="glass-card" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div class="flex justify-between items-center mb-lg">
+                <h2>🎮 Keyboard Shortcuts</h2>
+                <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-ghost">×</button>
+            </div>
+            <div class="help-content">
+                <div class="shortcut-item">
+                    <kbd>Ctrl + D</kbd>
+                    <span>Toggle dark/light theme</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl + H</kbd>
+                    <span>Show this help</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl + Enter</kbd>
+                    <span>Submit form</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Escape</kbd>
+                    <span>Close modals</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-sm, 0.5rem) 0;
+            border-bottom: 1px solid var(--border-secondary, rgba(255,255,255,0.05));
+        }
+        .shortcut-item:last-child {
+            border-bottom: none;
+        }
+        kbd {
+            background: var(--bg-tertiary, #2d2d2d);
+            border: 1px solid var(--border-primary, rgba(255,255,255,0.1));
+            border-radius: var(--radius-sm, 0.375rem);
+            padding: var(--space-xs, 0.25rem) var(--space-sm, 0.5rem);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+function closeAllModals() {
+    document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
+}
+
+// Smooth Animations
+function setupSmoothAnimations() {
+    // Intersection Observer for scroll animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    // Observe elements for animation
+    document.querySelectorAll('#gameselect, #PlayerLog, #gamelogdiv').forEach(el => {
+        if (el) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            observer.observe(el);
+        }
+    });
+    
+    // Add fadeInUp animation
+    if (!document.querySelector('#modern-animations')) {
+        const style = document.createElement('style');
+        style.id = 'modern-animations';
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+            
+            /* Enhanced button animations */
+            button, input[type=submit] {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            button::before, input[type=submit]::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.6s ease;
+            }
+            
+            button:hover::before, input[type=submit]:hover::before {
+                left: 100%;
+            }
+            
+            /* Loading state */
+            .loading {
+                display: inline-flex;
+                align-items: center;
+                gap: var(--space-sm, 0.5rem);
+            }
+            
+            .loading::after {
+                content: '';
+                width: 16px;
+                height: 16px;
+                border: 2px solid var(--border-primary, rgba(255,255,255,0.1));
+                border-top: 2px solid var(--accent-primary, #6366f1);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Role-based Enhancements
+function setupRoleEnhancements() {
+    // Add modern styling to existing game elements
+    enhanceGameElements();
+    
+    // Setup real-time updates
+    startRealtimeUpdates();
+}
+
+function enhanceGameElements() {
+    // Enhance player log messages
+    const playerLog = document.getElementById('PlayerLog');
+    if (playerLog) {
+        playerLog.classList.add('modern-chat-container');
+        
+        // Add role-based styling to messages
+        const messages = playerLog.querySelectorAll('p');
+        messages.forEach(message => {
+            message.classList.add('modern-chat-message');
+            
+            // Detect message types and add appropriate styling
+            const text = message.textContent.toLowerCase();
+            if (text.includes('werwolf') || text.includes('werewolf')) {
+                message.classList.add('werewolf');
+            } else if (text.includes('system') || text.includes('spiel')) {
+                message.classList.add('system');
+            }
+        });
+    }
+    
+    // Enhance game log
+    const gameLog = document.getElementById('gamelogdiv');
+    if (gameLog) {
+        const messages = gameLog.querySelectorAll('p');
+        messages.forEach(message => {
+            message.classList.add('modern-chat-message');
+        });
+    }
+    
+    // Add glass card styling to main sections
+    const mainSections = document.querySelectorAll('#gameselect, #PlayerLog, #gamelogdiv, #listdiv');
+    mainSections.forEach(section => {
+        if (section && !section.classList.contains('glass-card')) {
+            section.classList.add('glass-card');
+        }
+    });
+}
+
+function startRealtimeUpdates() {
+    // Simulate real-time game updates
+    let updateInterval;
+    
+    function checkForUpdates() {
+        // This would normally connect to your PHP backend
+        // For now, we'll just enhance any new elements that appear
+        enhanceNewElements();
+    }
+    
+    function enhanceNewElements() {
+        // Look for new messages or elements that need modern styling
+        const newMessages = document.querySelectorAll('p:not(.modern-chat-message)');
+        newMessages.forEach(message => {
+            if (message.closest('#PlayerLog, #gamelogdiv')) {
+                message.classList.add('modern-chat-message');
+                message.style.animation = 'messageSlide 0.3s ease-out';
+            }
+        });
+        
+        // Add portraits to new players
+        addCharacterPortraits();
+    }
+    
+    // Start checking for updates every 2 seconds
+    updateInterval = setInterval(checkForUpdates, 2000);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        if (updateInterval) clearInterval(updateInterval);
+    });
+}
+
+// Enhanced Player Management
+function enhancePlayerInteractions() {
+    // Add click handlers for modern player cards
+    document.addEventListener('click', (e) => {
+        const playerCard = e.target.closest('.modern-player-card');
+        if (playerCard) {
+            handlePlayerCardClick(playerCard);
+        }
+    });
+}
+
+function handlePlayerCardClick(playerCard) {
+    const playerId = playerCard.dataset.playerId;
+    const playerName = playerCard.querySelector('.player-name')?.textContent;
+    
+    // Remove previous selections
+    document.querySelectorAll('.modern-player-card.selected').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selection to clicked card
+    playerCard.classList.add('selected');
+    
+    // Show selection feedback
+    showNotification(`Selected ${playerName}`, 'info', 2000);
+    
+    // Enable confirm button if present
+    const confirmBtn = document.querySelector('#confirmAction, .confirm-action');
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.classList.add('btn-danger');
+    }
+}
+
+// Form Enhancement
+function enhanceFormSubmissions() {
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+        
+        if (submitBtn) {
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            // Re-enable after a delay (in case form doesn't redirect)
+            setTimeout(() => {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }, 5000);
+        }
+    });
+}
+
+// Global functions for PHP integration
+window.modernWerewolf = {
+    showNotification,
+    toggleTheme,
+    enhancePlayerList,
+    addCharacterPortraits,
+    mapCharacterName
+};
 
 // Function to add character portraits to player lists
 function addCharacterPortraits() {
