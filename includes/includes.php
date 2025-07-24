@@ -189,21 +189,38 @@ class SQLiteToMySQLiWrapper {
             $query = str_replace('`', '', $query); // Remove backticks
             $query = preg_replace('/AUTO_INCREMENT/i', 'AUTOINCREMENT', $query);
             
-            // Handle old table creation attempts - just return success
-            if (preg_match('/CREATE TABLE \d+_(game|spieler)/i', $query)) {
-                // Old code trying to create per-game tables - ignore but return success
+            // Handle old table creation attempts - create actual game data
+            if (preg_match('/CREATE TABLE (\d+)_(game|spieler)/i', $query, $matches)) {
+                $gameId = $matches[1];
+                $tableType = $matches[2];
+                
+                if ($tableType === 'game') {
+                    // Create game in new format
+                    $this->pdo->exec("INSERT OR IGNORE INTO games (id, status, phase, spielphase) VALUES ($gameId, 'setup', 0, 0)");
+                } elseif ($tableType === 'spieler') {
+                    // Just return success - players will be added via INSERT statements
+                }
+                
                 return new SQLiteResultWrapper($this->pdo->query("SELECT 1"));
             }
             
             // Handle INSERT INTO old table format - convert to new format
             if (preg_match('/INSERT INTO (\d+)_spieler/i', $query, $matches)) {
                 $gameId = $matches[1];
-                // Convert to new players table format
-                $query = preg_replace('/INSERT INTO \d+_spieler/', 'INSERT INTO players', $query);
-                // Add game_id if not present
-                if (!preg_match('/game_id/', $query)) {
-                    $query = str_replace('(', "(game_id, player_number, ", $query);
-                    $query = str_replace('VALUES (', "VALUES ($gameId, ", $query);
+                
+                // Extract VALUES content for proper conversion
+                if (preg_match('/VALUES\s*\((.*?)\)/i', $query, $valueMatches)) {
+                    $values = $valueMatches[1];
+                    
+                    // Common player INSERT pattern: (id, name, spielleiter, lebt, ...)
+                    $query = "INSERT INTO players (game_id, player_number, name, is_game_master, is_alive, verification_number) VALUES ($gameId, $values, 12345)";
+                } else {
+                    // Fallback conversion
+                    $query = preg_replace('/INSERT INTO \d+_spieler/', 'INSERT INTO players', $query);
+                    if (!preg_match('/game_id/', $query)) {
+                        $query = str_replace('(', "(game_id, player_number, ", $query);
+                        $query = str_replace('VALUES (', "VALUES ($gameId, ", $query);
+                    }
                 }
             }
             
