@@ -1673,10 +1673,16 @@ p#liste {
                       $_COOKIE["eigeneID"] = 0;
                       $_COOKIE["verifizierungsnr"] = $verifizierungsnr;
                       writeGameToLogSpielErstellen($mysqli,$spielID,$_POST['ihrName']);
-                      break; //die Schleife beenden
+                      
+                      // Add player to the game
+                      $mysqli->Query("INSERT INTO $spielID"."_spieler (id, name, spielleiter, lebt, verifizierungsnr) VALUES (0, '".$mysqli->real_escape_string($_POST['ihrName'])."', 1, 1, $verifizierungsnr)");
+                      
+                      // Redirect to the game instead of reloading
+                      echo "<script>window.location.href = 'Werwolf.php?game=$spielID&id=0';</script>";
+                      exit(); // Stop execution to prevent page reload
                       }
                   }
-                  $pageReload = true;
+                  // Don't set pageReload = true here as it causes blank screen
                 }
                 else
                 {
