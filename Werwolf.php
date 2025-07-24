@@ -32,6 +32,7 @@ werwolfonline, a php web game
 <meta http-equiv="Expires" content="Sat, 01 Dec 2001 00:00:00 GMT">
 <link rel="stylesheet" type="text/css" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+<script src="werewolf-canvas.js"></script>
 <?php
 require_once('includes/functions.php');
 
@@ -122,11 +123,21 @@ p#liste {
 }
 
 </style>
-<link rel="SHORTCUT ICON" href="images/icon.ico" type="image/x-icon">
+<!-- Dynamic canvas-generated favicon will be added by JavaScript -->
 </head>
 <body onload="jsstart();">
+<div class="particle-container">
+	<div class="particle"></div>
+	<div class="particle"></div>
+	<div class="particle"></div>
+	<div class="particle"></div>
+	<div class="particle"></div>
+	<div class="particle"></div>
+	<div class="particle"></div>
+	<div class="particle"></div>
+</div>
 <section id="header">
-<h1>🌙 Werwolfonline.eu 🐺</h1>
+<h1 id="main-title">🌙 Werwolfonline.de 🐺</h1>
 <div class="header-subtitle">Das mysteriöse Spiel zwischen Tag und Nacht</div>
 </section>
 <section id="gameboard">
@@ -1819,9 +1830,9 @@ if (isset($_COOKIE['SpielID']))
 ?>
 </section>
 <footer id="info">
-<?php echo "". _VERSION ?>, Erstellt von Florian Lindenbauer<br>
-<a href="https://www.werwolfonline.eu/" target="_blank">Was ist Werwolf</a><br>
-<a href="https://www.werwolfonline.eu/anleitung" target="_blank">Anleitung</a><br>
+<?php echo "". _VERSION ?><br>
+<a href="https://www.werwolfonline.de/" target="_blank">Was ist Werwolf</a><br>
+<a href="https://www.werwolfonline.de/anleitung" target="_blank">Anleitung</a><br>
 </footer>
 
 <script charset="ISO-8859-1" type="text/javascript">
@@ -2215,5 +2226,6 @@ var sekBisTimerBeginn;
   }
 
 </script>
+<script src="werewolf-canvas.js"></script>
 </body>
 </HTML>

@@ -1,0 +1,27 @@
+# Production Dockerfile for Railway deployment
+FROM php:8.2-apache
+
+# Install PHP extensions
+RUN docker-php-ext-install mysqli pdo pdo_mysql
+
+# Enable Apache modules
+RUN a2enmod rewrite
+
+# Copy application files
+COPY . /var/www/html/
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html
+
+# Create log directory
+RUN mkdir -p /var/www/html/log && chown www-data:www-data /var/www/html/log
+
+# Apache configuration for Railway
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+# Expose port (Railway will assign this)
+EXPOSE 80
+
+# Start Apache
+CMD ["apache2-foreground"]
