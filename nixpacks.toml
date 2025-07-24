@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['php82', 'php82Extensions.mysqli', 'php82Extensions.pdo', 'php82Extensions.pdo_mysql']
+nixPkgs = ['php83', 'php83Extensions.mysqli', 'php83Extensions.pdo', 'php83Extensions.pdo_mysql']
 
 [phases.build]
 cmds = ['echo "Building Werewolf Game..."']

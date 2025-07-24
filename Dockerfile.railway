@@ -1,0 +1,32 @@
+# Railway Dockerfile for PHP Werewolf Game
+FROM php:8.3-apache
+
+# Install PHP extensions
+RUN docker-php-ext-install mysqli pdo pdo_mysql
+
+# Enable Apache modules
+RUN a2enmod rewrite headers expires deflate
+
+# Copy application
+COPY . /var/www/html/
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html
+
+# Create data directory for SQLite fallback
+RUN mkdir -p /var/www/html/data && chown www-data:www-data /var/www/html/data
+
+# Apache configuration
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+RUN echo "DirectoryIndex index.php Werwolf.php" >> /etc/apache2/apache2.conf
+
+# PHP optimizations
+RUN echo "output_buffering = 4096" >> /usr/local/etc/php/conf.d/werewolf.ini
+RUN echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/werewolf.ini
+
+# Expose port
+EXPOSE 80
+
+# Start Apache
+CMD ["apache2-foreground"]
