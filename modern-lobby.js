@@ -137,21 +137,43 @@ class WerewolfLobby {
         this.showLoading('Creating game...');
 
         try {
-            // Simulate API call
-            await this.delay(1500);
-            
-            const gameCode = this.generateGameCode();
-            const gameId = Date.now();
+            console.log("🟡 createGame() aufgerufen");
 
-            this.showNotification(`Game created! Code: ${gameCode}`, 'success');
+            const response = await fetch("/api/create-game", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(gameData)
+            });
+
+            console.log("🔵 Response erhalten:", response);
+
+            if (!response.ok) {
+                console.error("🔴 Serverfehler:", response.status);
+                const text = await response.text();
+                console.error("🔴 Antworttext:", text);
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log("🟢 Spiel erstellt:", result);
+
+            // Check if creation was successful
+            if (!result.success || !result.data.id) {
+                console.warn("⚠️ Keine Spiel-ID erhalten!");
+                throw new Error(result.error || 'No game ID received');
+            }
+
+            this.showNotification(`Spiel erstellt! ID: ${result.data.id}`, 'success');
             
-            // Redirect to waiting room
+            // Routing / Weiterleitung
+            console.log("🔁 Weiterleitung zu /game/" + result.data.id);
             setTimeout(() => {
-                window.location.href = `waiting-room.html?code=${gameCode}&host=true`;
-            }, 2000);
+                window.location.href = `/game/${result.data.id}`;
+            }, 1500);
 
         } catch (error) {
-            this.showNotification('Failed to create game. Please try again.', 'error');
+            console.error("🔥 Fehler beim Spiel-Erstellen:", error);
+            this.showNotification(`Failed to create game: ${error.message}`, 'error');
         } finally {
             this.hideLoading();
         }
@@ -161,21 +183,40 @@ class WerewolfLobby {
         this.showLoading('Joining game...');
 
         try {
-            // Simulate API call to check game exists
-            await this.delay(1000);
-            
-            // Simulate game validation
-            if (this.validateGameCode(gameCode)) {
-                this.showNotification('Joining game...', 'success');
+            // Validate game code format (should be numeric)
+            const gameId = parseInt(gameCode);
+            if (!gameId || gameId < 10000 || gameId > 99999) {
+                throw new Error('Invalid game code format');
+            }
+
+            const response = await fetch("/api/join-game", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    gameId: gameId,
+                    playerName: 'Player' // Default name, will be updated in game interface
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification(`Joining game ${gameId}...`, 'success');
                 setTimeout(() => {
-                    window.location.href = `waiting-room.html?code=${gameCode}`;
+                    window.location.href = `/game/${gameId}`;
                 }, 1500);
             } else {
-                throw new Error('Game not found');
+                throw new Error(result.error || 'Failed to join game');
             }
 
         } catch (error) {
-            this.showNotification('Game not found or full. Please check the code.', 'error');
+            console.error('Join game error:', error);
+            this.showNotification(`Game not found or full: ${error.message}`, 'error');
         } finally {
             this.hideLoading();
         }

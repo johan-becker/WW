@@ -20,6 +20,9 @@ werwolfonline, a php web game
 
 */
 
+require_once(__DIR__ . '/constants.php');
+require_once(__DIR__ . '/security.php');
+
 function start()
 {
   //Diese Funktion zeigt das Startformular an, bei dem der Nutzer aufgefordert wird, ein Spiel zu erstellen, oder eine ID einzugeben
@@ -47,26 +50,34 @@ function loescheAlteSpiele($mysqli)
 {
   //Alte Spiele sollten gelöscht werden, damit wieder Platz für neue Spiele ist
   //Alle Spieler, die vor mehr als 2 Stunden das letzte Mal geändert wurden, werden gelöscht
-  $zeitpunkt = time()-7200; //Zeit vor 2 Stunden
-
-  for ($i = 10000; $i<= 99999; $i++)
-  {
-    $existiert = True;
-    try{
-      $alleres = $mysqli ->Query("SELECT * FROM $i"."_game");
-    }
-    catch (mysqli_sql_exception $e){ 
-      $existiert = False;
-    }
-    if($existiert && isset($alleres->num_rows))
-    {
-      $temp = $alleres->fetch_assoc();
-      if ($temp && isset($temp['letzterAufruf']) && $temp['letzterAufruf'] < $zeitpunkt)
-      {
-        //löschen
-        $mysqli->query("DROP TABLE `$i"."_game`");
-        $mysqli->query("DROP TABLE `$i"."_spieler`");
-        //echo $mysqli->error;
+  try {
+    require_once('security.php');
+    $dbHelper = new DatabaseHelper($mysqli);
+    $deletedCount = $dbHelper->deleteOldGames(7200);
+    error_log("Deleted {$deletedCount} old games");
+  } catch (Exception $e) {
+    error_log("Error deleting old games: " . $e->getMessage());
+    // Fallback to old method for compatibility
+    $zeitpunkt = time()-7200;
+    for ($i = 10000; $i<= 99999; $i++) {
+      try {
+        $gameID = SecurityHelper::validateGameID($i);
+        $tableName = $gameID . "_game";
+        $stmt = $mysqli->prepare("SELECT letzterAufruf FROM `{$tableName}` LIMIT 1");
+        if ($stmt) {
+          $stmt->execute();
+          $result = $stmt->get_result();
+          if ($result->num_rows > 0) {
+            $temp = $result->fetch_assoc();
+            if ($temp && isset($temp['letzterAufruf']) && $temp['letzterAufruf'] < $zeitpunkt) {
+              $mysqli->query("DROP TABLE IF EXISTS `{$gameID}_game`");
+              $mysqli->query("DROP TABLE IF EXISTS `{$gameID}_spieler`");
+            }
+          }
+          $stmt->close();
+        }
+      } catch (Exception $ex) {
+        continue;
       }
     }
   }
@@ -166,9 +177,18 @@ function set_default_colors()
 function spielRegeln($mysqli)
 {
   //Zuerst die vorhandenen Einstellungen laden
-  $spielID = $_COOKIE['SpielID'];
-  $gameResult = $mysqli->Query("SELECT * FROM $spielID"."_game");
-  $gameResAssoc = $gameResult->fetch_assoc();
+  try {
+    require_once('security.php');
+    $spielID = SecurityHelper::validateGameID($_COOKIE['SpielID'] ?? 0);
+    $dbHelper = new DatabaseHelper($mysqli);
+    $gameResAssoc = $dbHelper->getGameData($spielID);
+    if (!$gameResAssoc) {
+      throw new RuntimeException("Game data not found");
+    }
+  } catch (Exception $e) {
+    error_log("Error in spielRegeln: " . $e->getMessage());
+    return;
+  }
   $buergermeisterWeitergeben = $gameResAssoc['buergermeisterWeitergeben'];
   $charaktereAufdecken = $gameResAssoc['charaktereAufdecken'];
   $seherSiehtIdentitaet = $gameResAssoc['seherSiehtIdentitaet'];
@@ -303,7 +323,10 @@ function spielRegeln($mysqli)
 
 function spielRegelnAnwenden($mysqli)
 {
-  $spielID = $_COOKIE['SpielID'];
+  try {
+    require_once('security.php');
+    $spielID = SecurityHelper::validateGameID($_COOKIE['SpielID'] ?? 0);
+    $dbHelper = new DatabaseHelper($mysqli);
   if (isset($_POST['buergermeister']))
   {
     //Zuerst überprüfen, ob die Variablen überhaupt existieren
@@ -363,35 +386,44 @@ function spielRegelnAnwenden($mysqli)
       $dorfstichwahltimer = 200;
       $dorfstichwahlzusatz = 5;
     }
-    $mysqli->Query("UPDATE $spielID"."_game SET buergermeisterWeitergeben = $buergermeisterWeitergeben,
-     charaktereAufdecken = $charaktereAufdecken,
-     seherSiehtIdentitaet = $seherSiehtIdentitaet,
-     werwolfzahl = $werwolfzahl,
-     hexenzahl = $hexenzahl,
-     jaegerzahl = $jaegerzahl,
-     seherzahl = $seherzahl,
-     amorzahl = $amorzahl,
-     beschuetzerzahl = $beschuetzerzahl,
-     parErmZahl = $parErmZahl,
-     lykantrophenzahl = $lykantrophenzahl,
-     spionezahl = $spionezahl,
-     idiotenzahl = $idiotenzahl,
-     pazifistenzahl = $pazifistenzahl,
-     altenzahl = $altenzahl,
-     urwolfzahl = $urwolfzahl,
-     zufaelligeAuswahl = $zufaelligauswaehlen,
-     zufaelligeAuswahlBonus = $zufaelligeAuswahlBonus,
-     werwolftimer1 = $werwolftimer1,
-     werwolfzusatz1 = $werwolfzusatz1,
-     werwolftimer2 = $werwolftimer2,
-     werwolfzusatz2 = $werwolfzusatz2,
-     dorftimer = $dorftimer,
-     dorfzusatz = $dorfzusatz,
-     dorfstichwahltimer = $dorfstichwahltimer,
-     dorfstichwahlzusatz = $dorfstichwahlzusatz,
-     inaktivzeit = $inaktivzeit,
-     inaktivzeitzusatz = $inaktivzeitzusatz");
+    // Use secure database helper to update settings
+    $settings = [
+      'buergermeisterWeitergeben' => $buergermeisterWeitergeben,
+      'charaktereAufdecken' => $charaktereAufdecken,
+      'seherSiehtIdentitaet' => $seherSiehtIdentitaet,
+      'werwolfzahl' => $werwolfzahl,
+      'hexenzahl' => $hexenzahl,
+      'jaegerzahl' => $jaegerzahl,
+      'seherzahl' => $seherzahl,
+      'amorzahl' => $amorzahl,
+      'beschuetzerzahl' => $beschuetzerzahl,
+      'parErmZahl' => $parErmZahl,
+      'lykantrophenzahl' => $lykantrophenzahl,
+      'spionezahl' => $spionezahl,
+      'idiotenzahl' => $idiotenzahl,
+      'pazifistenzahl' => $pazifistenzahl,
+      'altenzahl' => $altenzahl,
+      'urwolfzahl' => $urwolfzahl,
+      'zufaelligeAuswahl' => $zufaelligauswaehlen,
+      'zufaelligeAuswahlBonus' => $zufaelligeAuswahlBonus,
+      'werwolftimer1' => $werwolftimer1,
+      'werwolfzusatz1' => $werwolfzusatz1,
+      'werwolftimer2' => $werwolftimer2,
+      'werwolfzusatz2' => $werwolfzusatz2,
+      'dorftimer' => $dorftimer,
+      'dorfzusatz' => $dorfzusatz,
+      'dorfstichwahltimer' => $dorfstichwahltimer,
+      'dorfstichwahlzusatz' => $dorfstichwahlzusatz,
+      'inaktivzeit' => $inaktivzeit,
+      'inaktivzeitzusatz' => $inaktivzeitzusatz
+    ];
+    
+    $dbHelper->updateGameSettings($spielID, $settings);
     //Fertig upgedated ;)
+  }
+  } catch (Exception $e) {
+    error_log("Error in spielRegelnAnwenden: " . $e->getMessage());
+    echo "<p class='error'>Fehler beim Speichern der Einstellungen.</p>";
   }
 }
 
