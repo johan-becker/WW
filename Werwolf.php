@@ -37,43 +37,6 @@ werwolfonline, a php web game
 <script src="werewolf-canvas.js"></script>
 <?php
 require_once('includes/functions.php');
-require_once('includes/security.php');
-
-// Initialize error handling
-ErrorHandler::init();
-
-// Input validation and sanitization
-try {
-  // Validate and sanitize all POST data
-  if ($_POST) {
-    foreach ($_POST as $key => $value) {
-      if (is_string($value)) {
-        $_POST[$key] = trim($value);
-        if (strlen($_POST[$key]) > 1000) {
-          throw new InvalidArgumentException("Input too long: {$key}");
-        }
-      }
-    }
-    
-    // Specific validation for critical fields
-    if (isset($_POST['ihrName'])) {
-      $_POST['ihrName'] = SecurityHelper::validatePlayerName($_POST['ihrName']);
-    }
-    
-    if (isset($_POST['bestehendeSpielnummer'])) {
-      $_POST['bestehendeSpielnummer'] = SecurityHelper::validateGameID($_POST['bestehendeSpielnummer']);
-    }
-  }
-  
-  // Validate cookies
-  if (isset($_COOKIE['SpielID'])) {
-    $_COOKIE['SpielID'] = SecurityHelper::validateGameID($_COOKIE['SpielID']);
-  }
-  
-} catch (Exception $e) {
-  error_log("Input validation error: " . $e->getMessage());
-  die("Ungültige Eingabe. Bitte versuchen Sie es erneut.");
-}
 
 //Für die Farben ...
 if (isset($_POST['settings_color']))

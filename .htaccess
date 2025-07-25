@@ -1,20 +1,6 @@
 RewriteEngine On
-
-# Handle API routes first
-RewriteRule ^api/(.*)$ api.php [QSA,L]
-
-# Handle /game/{id} routes - serve the game interface
-RewriteRule ^game/([0-9]+)/?$ game.php?id=$1 [QSA,L]
-
-# Handle modern lobby
-RewriteRule ^lobby/?$ modern-lobby.html [L]
-
-# Handle existing files and directories
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# Default fallback to index
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Enable compression
